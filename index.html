@@ -188,226 +188,243 @@
   </div>
 
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymeoa0EboccXjiL_xFSFC1AZ0_FS7U1ogPHsy3ZYPngtCK7osw1EWpHiiPv8wuTRRx/exec";
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymeoa0EboccXjiL_xFSFC1AZ0_FS7U1ogPHsy3ZYPngtCK7osw1EWpHiiPv8wuTRRx/exec";
 
-    let currentDate = new Date();
-    let globalEmployees = [];
-    let globalCalendarData = {};
+  let currentDate = new Date();
+  let globalEmployees = [];
+  let globalCalendarData = {};
 
-    // 通用 JSONP 請求處理
-    function fetchJSONP(baseUrl, paramsObj = {}) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'jsonp_cb_' + Math.floor(Math.random() * 1000000);
-        
-        window[callbackName] = function(data) {
-          delete window[callbackName];
-          if (script.parentNode) script.parentNode.removeChild(script);
-          resolve(data);
-        };
+  // 1. JSONP 請求機制
+  function fetchJSONP(baseUrl, paramsObj = {}) {
+    return new Promise((resolve, reject) => {
+      const callbackName = 'jsonp_cb_' + Math.floor(Math.random() * 1000000);
+      
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        resolve(data);
+      };
 
-        const urlObj = new URL(baseUrl);
-        Object.keys(paramsObj).forEach(key => {
-          urlObj.searchParams.append(key, paramsObj[key]);
-        });
-        urlObj.searchParams.append('callback', callbackName);
-
-        const script = document.createElement('script');
-        script.src = urlObj.toString();
-        script.onerror = function() {
-          delete window[callbackName];
-          if (script.parentNode) script.parentNode.removeChild(script);
-          reject(new Error('JSONP 請求失敗'));
-        };
-        
-        document.body.appendChild(script);
+      const urlObj = new URL(baseUrl);
+      Object.keys(paramsObj).forEach(key => {
+        urlObj.searchParams.append(key, paramsObj[key]);
       });
-    }
+      urlObj.searchParams.append('callback', callbackName);
 
-    function switchTab(tab) {
-      document.getElementById('page-calendar').classList.toggle('hidden', tab !== 'calendar');
-      document.getElementById('page-employees').classList.toggle('hidden', tab !== 'employees');
+      const script = document.createElement('script');
+      script.src = urlObj.toString();
+      script.onerror = function() {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        reject(new Error('JSONP 攔截'));
+      };
       
-      const navCal = document.getElementById('nav-calendar');
-      const navEmp = document.getElementById('nav-employees');
+      document.body.appendChild(script);
+    });
+  }
+
+  // 2. 雙重保障請求：JSONP 失敗時自動降級使用 Fetch
+  async function smartFetch(paramsObj = {}) {
+    try {
+      // 優先嘗試 JSONP
+      return await fetchJSONP(GAS_API_URL, paramsObj);
+    } catch (err) {
+      console.warn("JSONP 遭瀏覽器套件阻擋，自動切換至 Fetch 備用機制...", err);
       
-      if(tab === 'calendar') {
-        navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition";
-        navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition";
-      } else {
-        navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition";
-        navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition";
-      }
-    }
-
-    function openLeaveModal() {
-      document.getElementById('leave-modal').classList.remove('hidden');
-      document.getElementById('leave-modal').classList.add('flex');
-    }
-
-    function closeLeaveModal() {
-      document.getElementById('leave-modal').classList.add('hidden');
-      document.getElementById('leave-modal').classList.remove('flex');
-    }
-
-    function openEmpModal() {
-      document.getElementById('emp-modal').classList.remove('hidden');
-      document.getElementById('emp-modal').classList.add('flex');
-    }
-
-    function closeEmpModal() {
-      document.getElementById('emp-modal').classList.add('hidden');
-      document.getElementById('emp-modal').classList.remove('flex');
-    }
-
-    function changeMonth(offset) {
-      currentDate.setMonth(currentDate.getMonth() + offset);
-      loadData();
-    }
-
-    async function loadData() {
-      const statusEl = document.getElementById('sync-status');
-      statusEl.innerHTML = `<i class="fa-solid fa-arrows-rotate animate-spin mr-2"></i> 正在同步 Google Sheets...`;
+      // 備用機制：使用 Fetch 讀取
+      const urlObj = new URL(GAS_API_URL);
+      Object.keys(paramsObj).forEach(key => urlObj.searchParams.append(key, paramsObj[key]));
       
-      try {
-        globalEmployees = await fetchJSONP(GAS_API_URL, { action: 'getEmployees' });
-        renderEmployees();
-        populateEmpDropdown();
-
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        globalCalendarData = await fetchJSONP(GAS_API_URL, { action: 'getCalendar', year: year, month: month });
-        renderCalendar();
-
-        statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-green-600 mr-2"></i> 已同步最新資料`;
-      } catch (err) {
-        console.error("載入失敗:", err);
-        statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> 同步失敗，請重試`;
-      }
+      const res = await fetch(urlObj.toString(), { redirect: 'follow' });
+      return await res.json();
     }
+  }
 
-    function renderEmployees() {
-      const tbody = document.getElementById('emp-table-body');
-      if (!globalEmployees || globalEmployees.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">暫無員工資料</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = globalEmployees.map(e => `
-        <tr>
-          <td class="p-4 font-semibold">${e.name}<br><span class="text-xs text-gray-400">${e.empId}</span></td>
-          <td class="p-4">${e.deptRole}</td>
-          <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs">${e.workSystem}</span></td>
-          <td class="p-4">${e.joinDate}</td>
-          <td class="p-4 font-bold text-green-700">${e.remainingAnnualLeave} / ${e.annualLeaveQuota} 天</td>
-          <td class="p-4 font-bold text-amber-600">${e.usedUnpaidLeave} 天</td>
-        </tr>
-      `).join('');
+  function switchTab(tab) {
+    document.getElementById('page-calendar').classList.toggle('hidden', tab !== 'calendar');
+    document.getElementById('page-employees').classList.toggle('hidden', tab !== 'employees');
+    
+    const navCal = document.getElementById('nav-calendar');
+    const navEmp = document.getElementById('nav-employees');
+    
+    if(tab === 'calendar') {
+      navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition";
+      navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition";
+    } else {
+      navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition";
+      navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition";
     }
+  }
 
-    function populateEmpDropdown() {
-      const sel = document.getElementById('leave-emp');
-      if (globalEmployees && globalEmployees.length > 0) {
-        sel.innerHTML = globalEmployees.map(e => `<option value="${e.empId}">${e.name} (${e.empId})</option>`).join('');
-      }
-    }
+  function openLeaveModal() {
+    document.getElementById('leave-modal').classList.remove('hidden');
+    document.getElementById('leave-modal').classList.add('flex');
+  }
 
-    function renderCalendar() {
+  function closeLeaveModal() {
+    document.getElementById('leave-modal').classList.add('hidden');
+    document.getElementById('leave-modal').classList.remove('flex');
+  }
+
+  function openEmpModal() {
+    document.getElementById('emp-modal').classList.remove('hidden');
+    document.getElementById('emp-modal').classList.add('flex');
+  }
+
+  function closeEmpModal() {
+    document.getElementById('emp-modal').classList.add('hidden');
+    document.getElementById('emp-modal').classList.remove('flex');
+  }
+
+  function changeMonth(offset) {
+    currentDate.setMonth(currentDate.getMonth() + offset);
+    loadData();
+  }
+
+  async function loadData() {
+    const statusEl = document.getElementById('sync-status');
+    statusEl.innerHTML = `<i class="fa-solid fa-arrows-rotate animate-spin mr-2"></i> 正在同步 Google Sheets...`;
+    
+    try {
+      globalEmployees = await smartFetch({ action: 'getEmployees' });
+      renderEmployees();
+      populateEmpDropdown();
+
       const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      document.getElementById('calendar-month-title').innerText = `${year} 年 ${month + 1} 月`;
+      const month = currentDate.getMonth() + 1;
+      globalCalendarData = await smartFetch({ action: 'getCalendar', year: year, month: month });
+      renderCalendar();
 
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const grid = document.getElementById('calendar-grid');
-      grid.innerHTML = '';
+      statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-green-600 mr-2"></i> 已同步最新資料`;
+    } catch (err) {
+      console.error("同步最終失敗:", err);
+      statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> 同步失敗，請重試`;
+    }
+  }
 
-      for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += `<div class="h-24 bg-gray-50/50 rounded-xl"></div>`;
-      }
+  function renderEmployees() {
+    const tbody = document.getElementById('emp-table-body');
+    if (!globalEmployees || globalEmployees.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">暫無員工資料</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = globalEmployees.map(e => `
+      <tr>
+        <td class="p-4 font-semibold">${e.name}<br><span class="text-xs text-gray-400">${e.empId}</span></td>
+        <td class="p-4">${e.deptRole}</td>
+        <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs">${e.workSystem}</span></td>
+        <td class="p-4">${e.joinDate}</td>
+        <td class="p-4 font-bold text-green-700">${e.remainingAnnualLeave} / ${e.annualLeaveQuota} 天</td>
+        <td class="p-4 font-bold text-amber-600">${e.usedUnpaidLeave} 天</td>
+      </tr>
+    `).join('');
+  }
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayLeaves = (globalCalendarData.requests || []).filter(r => dateStr >= r.startDate && dateStr <= r.endDate);
+  function populateEmpDropdown() {
+    const sel = document.getElementById('leave-emp');
+    if (globalEmployees && globalEmployees.length > 0) {
+      sel.innerHTML = globalEmployees.map(e => `<option value="${e.empId}">${e.name} (${e.empId})</option>`).join('');
+    }
+  }
 
-        let leaveBadges = dayLeaves.map(l => `
-          <div class="text-xs bg-green-100 text-green-800 p-1 rounded mb-1 truncate">
-            ${l.name} · ${l.type}
-          </div>
-        `).join('');
+  function renderCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    document.getElementById('calendar-month-title').innerText = `${year} 年 ${month + 1} 月`;
 
-        grid.innerHTML += `
-          <div class="h-24 border rounded-xl p-2 bg-white flex flex-col justify-between">
-            <div class="font-bold text-sm text-gray-500">${d}</div>
-            <div class="overflow-y-auto flex-1 my-1">${leaveBadges}</div>
-          </div>
-        `;
-      }
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const grid = document.getElementById('calendar-grid');
+    grid.innerHTML = '';
+
+    for (let i = 0; i < firstDay; i++) {
+      grid.innerHTML += `<div class="h-24 bg-gray-50/50 rounded-xl"></div>`;
     }
 
-    async function handleLeaveSubmit(e) {
-      e.preventDefault();
-      const form = {
-        empId: document.getElementById('leave-emp').value,
-        leaveType: document.getElementById('leave-type').value,
-        startDate: document.getElementById('leave-start').value,
-        endDate: document.getElementById('leave-end').value,
-        timeSlot: document.getElementById('leave-slot').value,
-        remark: document.getElementById('leave-remark').value,
-      };
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayLeaves = (globalCalendarData.requests || []).filter(r => dateStr >= r.startDate && dateStr <= r.endDate);
 
-      try {
-        const params = new URLSearchParams();
-        params.append('action', 'submitLeave');
-        params.append('form', JSON.stringify(form));
+      let leaveBadges = dayLeaves.map(l => `
+        <div class="text-xs bg-green-100 text-green-800 p-1 rounded mb-1 truncate">
+          ${l.name} · ${l.type}
+        </div>
+      `).join('');
 
-        await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString()
-        });
-
-        alert("申請已提交！");
-        closeLeaveModal();
-        setTimeout(loadData, 1500);
-      } catch (err) {
-        alert("提交失敗，請檢查網路");
-      }
+      grid.innerHTML += `
+        <div class="h-24 border rounded-xl p-2 bg-white flex flex-col justify-between">
+          <div class="font-bold text-sm text-gray-500">${d}</div>
+          <div class="overflow-y-auto flex-1 my-1">${leaveBadges}</div>
+        </div>
+      `;
     }
+  }
 
-    async function handleEmpSubmit(e) {
-      e.preventDefault();
-      const empData = {
-        empId: document.getElementById('emp-id').value,
-        name: document.getElementById('emp-name').value,
-        deptRole: document.getElementById('emp-dept').value,
-        joinDate: document.getElementById('emp-join').value,
-        workSystem: document.getElementById('emp-system').value,
-        status: '在職'
-      };
-
-      try {
-        const params = new URLSearchParams();
-        params.append('action', 'saveEmployee');
-        params.append('form', JSON.stringify(empData));
-
-        await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString()
-        });
-
-        alert("員工資料儲存成功！");
-        closeEmpModal();
-        setTimeout(loadData, 1500);
-      } catch (err) {
-        alert("儲存失敗，請檢查網路");
-      }
-    }
-
-    window.onload = function() {
-      loadData();
+  async function handleLeaveSubmit(e) {
+    e.preventDefault();
+    const form = {
+      empId: document.getElementById('leave-emp').value,
+      leaveType: document.getElementById('leave-type').value,
+      startDate: document.getElementById('leave-start').value,
+      endDate: document.getElementById('leave-end').value,
+      timeSlot: document.getElementById('leave-slot').value,
+      remark: document.getElementById('leave-remark').value,
     };
-  </script>
+
+    try {
+      const params = new URLSearchParams();
+      params.append('action', 'submitLeave');
+      params.append('form', JSON.stringify(form));
+
+      await fetch(GAS_API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+
+      alert("申請已提交！");
+      closeLeaveModal();
+      setTimeout(loadData, 1500);
+    } catch (err) {
+      alert("提交失敗，請檢查網路");
+    }
+  }
+
+  async function handleEmpSubmit(e) {
+    e.preventDefault();
+    const empData = {
+      empId: document.getElementById('emp-id').value,
+      name: document.getElementById('emp-name').value,
+      deptRole: document.getElementById('emp-dept').value,
+      joinDate: document.getElementById('emp-join').value,
+      workSystem: document.getElementById('emp-system').value,
+      status: '在職'
+    };
+
+    try {
+      const params = new URLSearchParams();
+      params.append('action', 'saveEmployee');
+      params.append('form', JSON.stringify(empData));
+
+      await fetch(GAS_API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+
+      alert("員工資料儲存成功！");
+      closeEmpModal();
+      setTimeout(loadData, 1500);
+    } catch (err) {
+      alert("儲存失敗，請檢查網路");
+    }
+  }
+
+  window.onload = function() {
+    loadData();
+  };
+</script>
 </body>
 </html>
