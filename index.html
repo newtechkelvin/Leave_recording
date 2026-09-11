@@ -59,11 +59,30 @@
       <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-bold">團隊月曆</h2>
-          <div class="flex items-center gap-4">
-            <button onclick="changeMonth(-1)" class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"><i class="fa-solid fa-chevron-left"></i></button>
-            <span id="calendar-month-title" class="text-lg font-bold">2026 年 9 月</span>
-            <button onclick="changeMonth(1)" class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"><i class="fa-solid fa-chevron-right"></i></button>
-          </div>
+<div class="flex items-center gap-2">
+  <button onclick="changeMonth(-1)" class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"><i class="fa-solid fa-chevron-left"></i></button>
+  
+  <!-- 年份選擇 -->
+  <select id="select-year" onchange="onDatePickerChange()" class="p-2 border rounded-lg font-bold text-sm bg-white cursor-pointer"></select>
+  
+  <!-- 月份選擇 -->
+  <select id="select-month" onchange="onDatePickerChange()" class="p-2 border rounded-lg font-bold text-sm bg-white cursor-pointer">
+    <option value="1">1 月</option>
+    <option value="2">2 月</option>
+    <option value="3">3 月</option>
+    <option value="4">4 月</option>
+    <option value="5">5 月</option>
+    <option value="6">6 月</option>
+    <option value="7">7 月</option>
+    <option value="8">8 月</option>
+    <option value="9">9 月</option>
+    <option value="10">10 月</option>
+    <option value="11">11 月</option>
+    <option value="12">12 月</option>
+  </select>
+
+  <button onclick="changeMonth(1)" class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
         </div>
         <div class="grid grid-cols-7 gap-2 text-center text-sm font-semibold text-gray-400 mb-2">
           <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
@@ -327,10 +346,46 @@
     }
   }
 
+// 動態初始化年份下拉選單 (例如前後 3 年：2023 - 2029)
+  function initYearDropdown() {
+    const yearSelect = document.getElementById('select-year');
+    if (!yearSelect || yearSelect.options.length > 0) return;
+    
+    const currentY = new Date().getFullYear();
+    for (let y = currentY - 3; y <= currentY + 3; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.innerText = `${y} 年`;
+      yearSelect.appendChild(opt);
+    }
+  }
+
+  // 下拉選單切換時觸發
+  function onDatePickerChange() {
+    const selectedYear = parseInt(document.getElementById('select-year').value);
+    const selectedMonth = parseInt(document.getElementById('select-month').value) - 1; // 月份為 0-indexed
+    
+    currentDate.setFullYear(selectedYear);
+    currentDate.setMonth(selectedMonth);
+    loadData();
+  }
+
+  // 左右箭頭切換按鈕
+  function changeMonth(offset) {
+    currentDate.setMonth(currentDate.getMonth() + offset);
+    loadData();
+  }
+
+  // 更新渲染月曆及連動下拉選單
   function renderCalendar() {
+    initYearDropdown();
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    document.getElementById('calendar-month-title').innerText = `${year} 年 ${month + 1} 月`;
+
+    // 同步下拉選單的值
+    document.getElementById('select-year').value = year;
+    document.getElementById('select-month').value = month + 1;
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
