@@ -61,11 +61,12 @@
           <div class="flex items-center gap-4">
             <h2 class="text-xl font-bold">團隊月曆</h2>
             <!-- 圖例 Legend -->
-            <div class="flex items-center gap-2 text-xs">
-              <span class="px-2 py-0.5 rounded bg-green-100 text-green-800 font-semibold">🟢 年假</span>
-              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">🟡 病假</span>
-              <span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold">🟣 短周調配</span>
-              <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold">🔵 OT補假</span>
+            <div class="flex items-center gap-2 text-xs flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-red-100 text-red-800 font-semibold border border-red-200">🔴 公眾假期</span>
+              <span class="px-2 py-0.5 rounded bg-green-100 text-green-800 font-semibold border border-green-200">🟢 年假</span>
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold border border-amber-200">🟡 病假</span>
+              <span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold border border-purple-200">🟣 短周調配</span>
+              <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold border border-blue-200">🔵 OT補假</span>
             </div>
           </div>
           
@@ -119,7 +120,7 @@
     </section>
   </main>
 
-  <!-- 彈窗 1: 提交申請 (假別/OT) -->
+  <!-- 彈窗 1: 提交請假 / OT 申請 -->
   <div id="leave-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
     <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
       <h3 class="text-lg font-bold">提交請假 / OT 申請</h3>
@@ -375,12 +376,21 @@
     }
 
     const satDutyMap = globalCalendarData.saturdayDuty || {};
+    const holidaysMap = globalCalendarData.holidaysMap || {};
 
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayLeaves = (globalCalendarData.requests || []).filter(r => dateStr >= r.startDate && dateStr <= r.endDate);
 
-      // 假別顏色映射
+      // 1. 公眾假期紅標
+      let holidayBadge = '';
+      if (holidaysMap[dateStr]) {
+        holidayBadge = `<div class="text-xs bg-red-100 text-red-800 border border-red-200 p-1 rounded font-bold mb-1 truncate">
+          🔴 ${holidaysMap[dateStr]}
+        </div>`;
+      }
+
+      // 2. 員工請假彩色標籤
       let leaveBadges = dayLeaves.map(l => {
         let colorClass = "bg-gray-100 text-gray-800";
         if (l.type === '年假') colorClass = "bg-green-100 text-green-800 border border-green-200";
@@ -391,9 +401,9 @@
         return `<div class="text-xs p-1 rounded mb-1 truncate ${colorClass}">${l.name} · ${l.type}</div>`;
       }).join('');
 
-      // 星期六當值人員顯示
+      // 3. 星期六當值名單
       let dutyBadge = '';
-      if (satDutyMap[dateStr] && satDutyMap[dateStr].length > 0) {
+      if (satDutyMap[dateStr] && satDutyMap[dateStr].length > 0 && !holidaysMap[dateStr]) {
         dutyBadge = `<div class="text-[10px] bg-gray-100 text-gray-600 p-1 rounded mt-1 border border-gray-200">
           <strong>🏢 當值:</strong> ${satDutyMap[dateStr].join(', ')}
         </div>`;
@@ -402,7 +412,10 @@
       grid.innerHTML += `
         <div class="h-28 border rounded-xl p-2 bg-white flex flex-col justify-between">
           <div class="font-bold text-sm text-gray-500">${d}</div>
-          <div class="overflow-y-auto flex-1 my-1">${leaveBadges}</div>
+          <div class="overflow-y-auto flex-1 my-1">
+            ${holidayBadge}
+            ${leaveBadges}
+          </div>
           ${dutyBadge}
         </div>
       `;
