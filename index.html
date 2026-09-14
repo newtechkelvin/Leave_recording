@@ -14,68 +14,53 @@
     .accent-green:hover { background-color: #aadb4d; }
   </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen overflow-hidden">
+<body class="flex h-screen">
 
-  <!-- 手機版頂部 Header -->
-  <div class="md:hidden bg-sidebar text-white p-4 flex justify-between items-center z-20">
-    <div class="flex items-center gap-2">
-      <div class="w-7 h-7 rounded-full accent-green flex items-center justify-center font-bold text-sm">L</div>
-      <span class="font-bold tracking-wide text-sm">新力機械 - 假期系統</span>
-    </div>
-    <button onclick="toggleMobileSidebar()" class="p-2 text-white focus:outline-none">
-      <i class="fa-solid fa-bars text-xl"></i>
-    </button>
-  </div>
-
-  <!-- 左側導覽列 (電腦固定 / 手機滑出) -->
-  <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 bg-sidebar text-white flex flex-col justify-between p-4 z-30 transition-transform duration-300 ease-in-out">
+  <!-- 左側導覽列 -->
+  <aside class="w-64 bg-sidebar text-white flex flex-col justify-between p-4 shrink-0">
     <div>
-      <div class="hidden md:flex items-center gap-3 mb-8 px-2">
+      <div class="flex items-center gap-3 mb-8 px-2">
         <div class="w-8 h-8 rounded-full accent-green flex items-center justify-center font-bold">L</div>
         <span class="text-xl font-bold tracking-wide">員工假期管理系統</span>
       </div>
-      <nav class="space-y-2 mt-4 md:mt-0">
-        <button onclick="switchTab('calendar')" id="nav-calendar" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition text-left">
+      <nav class="space-y-2">
+        <button onclick="switchTab('calendar')" id="nav-calendar" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition">
           <i class="fa-regular font-bold fa-calendar-days"></i> 團隊月曆
         </button>
-        <button onclick="switchTab('employees')" id="nav-employees" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition text-left">
+        <button onclick="switchTab('employees')" id="nav-employees" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition">
           <i class="fa-solid fa-users"></i> 員工管理
         </button>
       </nav>
     </div>
-    <div class="bg-white/5 p-3 rounded-xl text-xs text-gray-400 mt-6 md:mt-0">
+    <div class="bg-white/5 p-3 rounded-xl text-xs text-gray-400">
       <i class="fa-solid fa-circle-check text-green-400 mr-1"></i> Vercel 已連線
     </div>
   </aside>
 
-  <!-- 手機版遮罩 -->
-  <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
-
   <!-- 右側主要內容區 -->
-  <main class="flex-1 overflow-y-auto p-4 md:p-8">
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <main class="flex-1 overflow-y-auto p-8">
+    <header class="flex justify-between items-center mb-6">
       <div>
         <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">員工假期管理系統</p>
-        <h1 class="text-xl md:text-2xl font-bold">新力機械有限公司 ✦</h1>
+        <h1 class="text-2xl font-bold">新力機械有限公司 ✦</h1>
       </div>
-      <button onclick="openLeaveModal()" class="w-full sm:w-auto accent-green px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+      <button onclick="openLeaveModal()" class="accent-green px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm cursor-pointer">
         <i class="fa-solid fa-plus"></i> 新增申請
       </button>
     </header>
 
-    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2.5 rounded-xl mb-6 text-sm flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center">
+    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-2.5 rounded-xl mb-6 text-sm flex items-center justify-between">
       <span id="sync-status"><i class="fa-solid fa-arrows-rotate animate-spin mr-2"></i> 正在與 Google Sheets 即時同步...</span>
-      <button onclick="loadData()" class="underline font-semibold cursor-pointer text-xs sm:text-sm">立即刷新</button>
+      <button onclick="loadData()" class="underline font-semibold cursor-pointer">立即刷新</button>
     </div>
 
     <!-- 頁面 1: 團隊月曆 -->
     <section id="page-calendar" class="space-y-4">
-      <div class="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <h2 class="text-lg md:text-xl font-bold">團隊月曆</h2>
-            <!-- 圖例 Legend -->
-            <div class="flex items-center gap-1.5 text-[11px] flex-wrap">
+      <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+          <div class="flex items-center gap-4">
+            <h2 class="text-xl font-bold">團隊月曆</h2>
+            <div class="flex items-center gap-2 text-xs flex-wrap">
               <span class="px-2 py-0.5 rounded bg-red-100 text-red-800 font-semibold border border-red-200">🔴 假期</span>
               <span class="px-2 py-0.5 rounded bg-green-100 text-green-800 font-semibold border border-green-200">🟢 年假</span>
               <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold border border-amber-200">🟡 病假</span>
@@ -83,45 +68,51 @@
               <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold border border-blue-200">🔵 OT</span>
             </div>
           </div>
-          
-          <div class="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+
+          <!-- 📍 紅框區域：今明放假動態資訊 -->
+          <div id="today-tomorrow-status" class="flex-1 max-w-md bg-amber-50/60 border border-amber-200 rounded-xl p-2 px-3 text-xs text-gray-700 flex items-center justify-around">
+            <div><span class="font-bold text-amber-900">🌴 今日放假:</span> <span id="today-leave-list" class="font-semibold text-gray-800">讀取中...</span></div>
+            <div class="h-4 w-[1px] bg-amber-200"></div>
+            <div><span class="font-bold text-amber-900">🌙 明日放假:</span> <span id="tomorrow-leave-list" class="font-semibold text-gray-800">讀取中...</span></div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- 📥 CSV 匯出按鈕 -->
+            <button onclick="exportMonthlyCSV()" class="p-2 px-3 border border-gray-300 rounded-lg text-xs font-semibold hover:bg-gray-50 flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-file-csv text-green-600 text-sm"></i> 匯出 CSV
+            </button>
             <button onclick="changeMonth(-1)" class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"><i class="fa-solid fa-chevron-left"></i></button>
-            <div class="flex gap-1">
-              <select id="select-year" onchange="onDatePickerChange()" class="p-2 border rounded-lg font-bold text-xs md:text-sm bg-white cursor-pointer"></select>
-              <select id="select-month" onchange="onDatePickerChange()" class="p-2 border rounded-lg font-bold text-xs md:text-sm bg-white cursor-pointer">
-                <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
-                <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
-                <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
-                <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
-              </select>
-            </div>
+            <select id="select-year" onchange="onDatePickerChange()" class="p-2 border rounded-lg font-bold text-sm bg-white cursor-pointer"></select>
+            <select id="select-month" onchange="onDatePickerChange()" class="p-2 border rounded-lg font-bold text-sm bg-white cursor-pointer">
+              <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+              <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+              <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+              <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+            </select>
             <button onclick="changeMonth(1)" class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
         </div>
         
-        <p class="md:hidden text-[11px] text-gray-400 mb-2"><i class="fa-solid fa-hand-pointer"></i> 點擊任何日期卡片可查看完整詳情</p>
-
-        <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-xs md:text-sm font-semibold text-gray-400 mb-2">
+        <div class="grid grid-cols-7 gap-2 text-center text-sm font-semibold text-gray-400 mb-2">
           <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
         </div>
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2"></div>
+        <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
       </div>
     </section>
 
     <!-- 頁面 2: 員工管理 -->
     <section id="page-employees" class="hidden space-y-4">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div class="flex justify-between items-center">
         <div>
           <h2 class="text-xl font-bold">員工管理</h2>
-          <p class="text-xs md:text-sm text-gray-500">檢視員工年假額度、OT 累積及工作制度。</p>
+          <p class="text-sm text-gray-500">檢視員工年假額度、OT 累積及工作制度。</p>
         </div>
-        <button onclick="openEmpModal()" class="w-full sm:w-auto bg-sidebar text-white px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer">
+        <button onclick="openEmpModal()" class="bg-sidebar text-white px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer">
           + 新增員工
         </button>
       </div>
-      
-      <div class="bg-white rounded-2xl border border-gray-100 overflow-x-auto shadow-sm">
-        <table class="w-full text-left border-collapse min-w-[650px]">
+      <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+        <table class="w-full text-left border-collapse">
           <thead>
             <tr class="border-b bg-gray-50 text-xs font-semibold text-gray-500">
               <th class="p-4">員工</th>
@@ -133,33 +124,15 @@
               <th class="p-4">已取無薪假</th>
             </tr>
           </thead>
-          <tbody id="emp-table-body" class="divide-y text-xs md:text-sm"></tbody>
+          <tbody id="emp-table-body" class="divide-y text-sm"></tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <!-- 彈窗 1: 每日詳情 (手機版解決文字截斷利器) -->
-  <div id="day-detail-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-xl">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 id="modal-day-title" class="text-lg font-bold">2026年9月12日 詳情</h3>
-        <button onclick="closeDayDetailModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
-      </div>
-      
-      <div id="modal-day-content" class="space-y-3 text-sm min-h-[120px]">
-        <!-- 動態渲染當日詳情 -->
-      </div>
-
-      <div class="flex justify-end pt-2">
-        <button onclick="closeDayDetailModal()" class="accent-green px-5 py-2 rounded-xl text-sm font-bold cursor-pointer">關閉</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 彈窗 2: 提交請假 / OT 申請 -->
+  <!-- 彈窗 1: 提交請假 / OT 申請 -->
   <div id="leave-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white w-full max-w-md rounded-2xl p-5 md:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
       <h3 class="text-lg font-bold">提交請假 / OT 申請</h3>
       <form id="leave-form" onsubmit="handleLeaveSubmit(event)" class="space-y-3">
         <div>
@@ -168,15 +141,31 @@
         </div>
         <div>
           <label class="text-xs font-semibold text-gray-600">申請類型</label>
-          <select id="leave-type" class="w-full p-2 border rounded-lg text-sm mt-1">
+          <select id="leave-type" onchange="onLeaveTypeChange()" class="w-full p-2 border rounded-lg text-sm mt-1">
             <option value="年假">🟢 年假</option>
             <option value="病假">🟡 病假</option>
             <option value="短周調配">🟣 短周調配</option>
-            <option value="OT補假">🔵 OT 補假 (+1 天年假)</option>
+            <option value="OT補假">🔵 OT 補假</option>
             <option value="無薪假">⚪ 無薪假</option>
           </select>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+        <!-- 🟡 病假動態隱藏欄位 -->
+        <div id="sick-leave-fields" class="hidden grid grid-cols-2 gap-2 bg-amber-50/60 p-3 rounded-xl border border-amber-200">
+          <div>
+            <label class="text-xs font-semibold text-gray-600">醫生紙證明</label>
+            <select id="has-doctor-cert" class="w-full p-2 border rounded-lg text-sm mt-1 bg-white">
+              <option value="有">有</option>
+              <option value="沒有">沒有</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-600">醫生紙顯示天數</label>
+            <input type="number" id="doctor-cert-days" step="0.5" value="1" min="0" class="w-full p-2 border rounded-lg text-sm mt-1 bg-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-xs font-semibold text-gray-600">開始日期</label>
             <input type="date" id="leave-start" required class="w-full p-2 border rounded-lg text-sm mt-1">
@@ -195,7 +184,7 @@
           </select>
         </div>
         <div>
-          <label class="text-xs font-semibold text-gray-600">備註</label>
+          <label id="remark-label" class="text-xs font-semibold text-gray-600">備註</label>
           <textarea id="leave-remark" class="w-full p-2 border rounded-lg text-sm mt-1" rows="2"></textarea>
         </div>
         <div class="flex justify-end gap-2 pt-2">
@@ -206,9 +195,9 @@
     </div>
   </div>
 
-  <!-- 彈窗 3: 新增員工 -->
+  <!-- 彈窗 2: 新增員工 -->
   <div id="emp-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white w-full max-w-md rounded-2xl p-5 md:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
       <h3 class="text-lg font-bold">新增員工資料</h3>
       <form id="emp-form" onsubmit="handleEmpSubmit(event)" class="space-y-3">
         <div>
@@ -223,7 +212,7 @@
           <label class="text-xs font-semibold text-gray-600">部門 / 職位</label>
           <input type="text" id="emp-dept" required placeholder="例如：運輸部 / 司機" class="w-full p-2 border rounded-lg text-sm mt-1">
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-xs font-semibold text-gray-600">入職日期</label>
             <input type="date" id="emp-join" required class="w-full p-2 border rounded-lg text-sm mt-1">
@@ -251,14 +240,6 @@
   let currentDate = new Date();
   let globalEmployees = [];
   let globalCalendarData = {};
-  let currentMonthDayMap = {}; // 快取當月每日資料
-
-  function toggleMobileSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    sidebar.classList.toggle('-translate-x-full');
-    overlay.classList.toggle('hidden');
-  }
 
   function fetchJSONP(baseUrl, paramsObj = {}) {
     return new Promise((resolve, reject) => {
@@ -303,26 +284,45 @@
     const navEmp = document.getElementById('nav-employees');
     
     if(tab === 'calendar') {
-      navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition text-left";
-      navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition text-left";
+      navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition";
+      navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition";
     } else {
-      navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition text-left";
-      navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition text-left";
-    }
-
-    if (window.innerWidth < 768) {
-      toggleMobileSidebar();
+      navEmp.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 font-medium transition";
+      navCal.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 font-medium text-gray-300 transition";
     }
   }
 
   function openLeaveModal() {
     document.getElementById('leave-modal').classList.remove('hidden');
     document.getElementById('leave-modal').classList.add('flex');
+    onLeaveTypeChange();
   }
 
   function closeLeaveModal() {
     document.getElementById('leave-modal').classList.add('hidden');
     document.getElementById('leave-modal').classList.remove('flex');
+  }
+
+  // 🟡 病假動態顯示與 OT 必填控制
+  function onLeaveTypeChange() {
+    const type = document.getElementById('leave-type').value;
+    const sickFields = document.getElementById('sick-leave-fields');
+    const remarkLabel = document.getElementById('remark-label');
+    const remarkInput = document.getElementById('leave-remark');
+
+    if (type === '病假') {
+      sickFields.classList.remove('hidden');
+    } else {
+      sickFields.classList.add('hidden');
+    }
+
+    if (type === 'OT補假') {
+      remarkLabel.innerHTML = '備註 <span class="text-red-500">* (必填)</span>';
+      remarkInput.required = true;
+    } else {
+      remarkLabel.innerHTML = '備註';
+      remarkInput.required = false;
+    }
   }
 
   function openEmpModal() {
@@ -333,64 +333,6 @@
   function closeEmpModal() {
     document.getElementById('emp-modal').classList.add('hidden');
     document.getElementById('emp-modal').classList.remove('flex');
-  }
-
-  function openDayDetailModal(dateStr) {
-    const data = currentMonthDayMap[dateStr];
-    if (!data) return;
-
-    document.getElementById('modal-day-title').innerText = `${dateStr} 詳情`;
-    const content = document.getElementById('modal-day-content');
-    
-    let html = '';
-
-    // 1. 公眾假期
-    if (data.holiday) {
-      html += `<div class="p-3 bg-red-50 border border-red-200 text-red-800 rounded-xl font-bold flex items-center gap-2">
-        <span>🔴</span> <span>公眾假期：${data.holiday}</span>
-      </div>`;
-    }
-
-    // 2. 請假人員
-    if (data.leaves && data.leaves.length > 0) {
-      html += `<div>
-        <p class="font-bold text-gray-700 mb-2">請假 / OT 紀錄：</p>
-        <div class="space-y-1.5">`;
-      data.leaves.forEach(l => {
-        let badgeColor = "bg-gray-100 text-gray-800";
-        if (l.type === '年假') badgeColor = "bg-green-100 text-green-800 border-green-200";
-        if (l.type === '病假') badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
-        if (l.type === '短周調配') badgeColor = "bg-purple-100 text-purple-800 border-purple-200";
-        if (l.type === 'OT補假') badgeColor = "bg-blue-100 text-blue-800 border-blue-200";
-
-        html += `<div class="p-2 rounded-lg border text-xs flex justify-between items-center ${badgeColor}">
-          <span class="font-bold text-sm">${l.name}</span>
-          <span class="px-2 py-0.5 rounded bg-white/60 font-semibold">${l.type} (${l.timeSlot || '全日'})</span>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    // 3. 星期六當值人員
-    if (data.duties && data.duties.length > 0 && !data.holiday) {
-      html += `<div class="p-3 bg-gray-50 border border-gray-200 rounded-xl">
-        <p class="font-bold text-gray-700 mb-1">🏢 星期六當值名單：</p>
-        <p class="text-sm font-semibold text-gray-800">${data.duties.join('、 ')}</p>
-      </div>`;
-    }
-
-    if (!data.holiday && (!data.leaves || data.leaves.length === 0) && (!data.duties || data.duties.length === 0)) {
-      html = `<p class="text-gray-400 text-center py-6">當天無請假紀錄及當值安排</p>`;
-    }
-
-    content.innerHTML = html;
-    document.getElementById('day-detail-modal').classList.remove('hidden');
-    document.getElementById('day-detail-modal').classList.add('flex');
-  }
-
-  function closeDayDetailModal() {
-    document.getElementById('day-detail-modal').classList.add('hidden');
-    document.getElementById('day-detail-modal').classList.remove('flex');
   }
 
   function initYearDropdown() {
@@ -431,6 +373,7 @@
       const month = currentDate.getMonth() + 1;
       globalCalendarData = await smartFetch({ action: 'getCalendar', year: year, month: month });
       renderCalendar();
+      renderTodayTomorrowLeaves();
 
       statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-green-600 mr-2"></i> 已同步最新資料`;
     } catch (err) {
@@ -465,6 +408,25 @@
     }
   }
 
+  // 📍 渲染紅框處：今天與明天放假員工
+  function renderTodayTomorrowLeaves() {
+    const todayObj = new Date();
+    const tomorrowObj = new Date();
+    tomorrowObj.setDate(todayObj.getDate() + 1);
+
+    const formatDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const todayStr = formatDateStr(todayObj);
+    const tomorrowStr = formatDateStr(tomorrowObj);
+
+    const requests = globalCalendarData.requests || [];
+    
+    const todayLeaves = requests.filter(r => todayStr >= r.startDate && todayStr <= r.endDate && r.status === '已批准').map(r => r.name);
+    const tomorrowLeaves = requests.filter(r => tomorrowStr >= r.startDate && tomorrowStr <= r.endDate && r.status === '已批准').map(r => r.name);
+
+    document.getElementById('today-leave-list').innerText = todayLeaves.length > 0 ? todayLeaves.join(', ') : '無';
+    document.getElementById('tomorrow-leave-list').innerText = tomorrowLeaves.length > 0 ? tomorrowLeaves.join(', ') : '無';
+  }
+
   function renderCalendar() {
     initYearDropdown();
     const year = currentDate.getFullYear();
@@ -477,10 +439,12 @@
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const grid = document.getElementById('calendar-grid');
     grid.innerHTML = '';
-    currentMonthDayMap = {}; // 清空快取
+
+    const realToday = new Date();
+    const realTodayStr = `${realToday.getFullYear()}-${String(realToday.getMonth() + 1).padStart(2, '0')}-${String(realToday.getDate()).padStart(2, '0')}`;
 
     for (let i = 0; i < firstDay; i++) {
-      grid.innerHTML += `<div class="h-16 md:h-28 bg-gray-50/50 rounded-xl"></div>`;
+      grid.innerHTML += `<div class="h-28 bg-gray-50/50 rounded-xl"></div>`;
     }
 
     const satDutyMap = globalCalendarData.saturdayDuty || {};
@@ -490,23 +454,18 @@
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayLeaves = (globalCalendarData.requests || []).filter(r => dateStr >= r.startDate && dateStr <= r.endDate);
 
-      // 快取當天數據供手機彈窗使用
-      currentMonthDayMap[dateStr] = {
-        holiday: holidaysMap[dateStr] || null,
-        leaves: dayLeaves,
-        duties: satDutyMap[dateStr] || []
-      };
+      // 📍 高亮「今日」樣式
+      const isToday = (dateStr === realTodayStr);
+      const cardBgClass = isToday ? 'bg-green-50/50 border-2 border-green-500 shadow-md ring-2 ring-green-200' : 'bg-white border border-gray-100';
+      const dayNumHeader = isToday ? `<span class="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">今日 (${d})</span>` : `<span class="font-bold text-sm text-gray-500">${d}</span>`;
 
-      // 1. 公眾假期
       let holidayBadge = '';
       if (holidaysMap[dateStr]) {
-        holidayBadge = `<div class="text-[10px] md:text-xs bg-red-100 text-red-800 border border-red-200 p-0.5 md:p-1 rounded font-bold mb-1 truncate">
-          <span class="hidden md:inline">🔴 ${holidaysMap[dateStr]}</span>
-          <span class="md:hidden">🔴 假</span>
+        holidayBadge = `<div class="text-xs bg-red-100 text-red-800 border border-red-200 p-1 rounded font-bold mb-1 truncate">
+          🔴 ${holidaysMap[dateStr]}
         </div>`;
       }
 
-      // 2. 員工請假 (電腦版顯示全名，手機版雙欄/精簡顯示)
       let leaveBadges = dayLeaves.map(l => {
         let colorClass = "bg-gray-100 text-gray-800";
         if (l.type === '年假') colorClass = "bg-green-100 text-green-800 border border-green-200";
@@ -514,25 +473,20 @@
         if (l.type === '短周調配') colorClass = "bg-purple-100 text-purple-800 border border-purple-200";
         if (l.type === 'OT補假') colorClass = "bg-blue-100 text-blue-800 border border-blue-200";
 
-        return `<div class="text-[10px] md:text-xs p-0.5 md:p-1 rounded mb-1 truncate ${colorClass}">
-          <span class="hidden md:inline">${l.name} · ${l.type}</span>
-          <span class="md:hidden">${l.name.substring(0, 2)}</span>
-        </div>`;
+        return `<div class="text-xs p-1 rounded mb-1 truncate ${colorClass}">${l.name} · ${l.type}</div>`;
       }).join('');
 
-      // 3. 星期六當值
       let dutyBadge = '';
       if (satDutyMap[dateStr] && satDutyMap[dateStr].length > 0 && !holidaysMap[dateStr]) {
-        dutyBadge = `<div class="text-[9px] md:text-[10px] bg-gray-100 text-gray-600 p-0.5 md:p-1 rounded mt-1 border border-gray-200 truncate">
-          <span class="hidden md:inline"><strong>🏢 當值:</strong> ${satDutyMap[dateStr].join(', ')}</span>
-          <span class="md:hidden">🏢 ${satDutyMap[dateStr].length}人</span>
+        dutyBadge = `<div class="text-[10px] bg-gray-100 text-gray-600 p-1 rounded mt-1 border border-gray-200">
+          <strong>🏢 當值:</strong> ${satDutyMap[dateStr].join(', ')}
         </div>`;
       }
 
       grid.innerHTML += `
-        <div onclick="openDayDetailModal('${dateStr}')" class="h-16 md:h-28 border rounded-xl p-1 md:p-2 bg-white flex flex-col justify-between overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition">
-          <div class="font-bold text-xs md:text-sm text-gray-500">${d}</div>
-          <div class="overflow-y-auto flex-1 my-0.5">
+        <div class="h-28 rounded-xl p-2 flex flex-col justify-between ${cardBgClass}">
+          <div class="flex justify-between items-center">${dayNumHeader}</div>
+          <div class="overflow-y-auto flex-1 my-1">
             ${holidayBadge}
             ${leaveBadges}
           </div>
@@ -542,11 +496,54 @@
     }
   }
 
+  // 📥 匯出當月請假/OT 詳細 CSV 功能 (UTF-8 含 BOM 避免 Excel 亂碼)
+  function exportMonthlyCSV() {
+    const requests = globalCalendarData.requests || [];
+    if (requests.length === 0) {
+      alert("當前月份無請假或 OT 紀錄，無法匯出。");
+      return;
+    }
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+
+    let csvContent = "\uFEFF"; // UTF-8 BOM 避免中文字亂碼
+    csvContent += "員工姓名,放假開始日期,放假結束日期,假期日數,假期類別,假期時段,醫生紙證明,OT天數,狀態,備註\n";
+
+    requests.forEach(r => {
+      const otDays = (r.type === 'OT補假') ? 1 : 0;
+      const row = [
+        `"${r.name}"`,
+        `"${r.startDate}"`,
+        `"${r.endDate}"`,
+        `"${r.days || 1}"`,
+        `"${r.type}"`,
+        `"${r.timeSlot}"`,
+        `"${r.hasDoctorCert || '-'}"`,
+        `"${otDays}"`,
+        `"${r.status}"`,
+        `"${(r.remark || '').replace(/"/g, '""')}"`
+      ];
+      csvContent += row.join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `新力機械_員工請假紀錄_${year}年${month}月.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   async function handleLeaveSubmit(e) {
     e.preventDefault();
     const form = {
       empId: document.getElementById('leave-emp').value,
       leaveType: document.getElementById('leave-type').value,
+      hasDoctorCert: document.getElementById('has-doctor-cert').value,
+      doctorCertDays: document.getElementById('doctor-cert-days').value,
       startDate: document.getElementById('leave-start').value,
       endDate: document.getElementById('leave-end').value,
       timeSlot: document.getElementById('leave-slot').value,
