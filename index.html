@@ -77,6 +77,7 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- 🔒 需密碼驗證的 CSV 匯出按鈕 -->
             <button onclick="exportMonthlyCSV()" class="p-2 px-3 border border-gray-300 rounded-lg text-xs font-semibold hover:bg-gray-50 flex items-center gap-1.5 cursor-pointer">
               <i class="fa-solid fa-file-csv text-green-600 text-sm"></i> 匯出當月 CSV
             </button>
@@ -233,7 +234,7 @@
     </div>
   </div>
 
-  <!-- 📍 彈窗 3: 每日詳情彈窗（包含 修改/刪除 按鈕） -->
+  <!-- 彈窗 3: 每日詳情彈窗 -->
   <div id="day-detail-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
     <div class="bg-white w-full max-w-lg rounded-2xl p-6 space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
@@ -289,7 +290,25 @@
     }
   }
 
+  // 📍 密碼驗證器 (密碼 2866)
+  function verifyPassword() {
+    const pwd = prompt("請輸入管理員授權密碼：");
+    if (pwd === "2866") {
+      return true;
+    } else if (pwd !== null) {
+      alert("密碼不正確！無法存取。");
+    }
+    return false;
+  }
+
+  // 🔒 切換分頁邏輯：切換至員工管理時需要驗證密碼
   function switchTab(tab) {
+    if (tab === 'employees') {
+      if (!verifyPassword()) {
+        return; // 密碼錯誤則中止切換
+      }
+    }
+
     document.getElementById('page-calendar').classList.toggle('hidden', tab !== 'calendar');
     document.getElementById('page-employees').classList.toggle('hidden', tab !== 'employees');
     
@@ -321,18 +340,6 @@
     document.getElementById('leave-modal').classList.remove('flex');
   }
 
-  // 📍 密碼驗證器 (密碼 2866)
-  function verifyPassword() {
-    const pwd = prompt("請輸入管理員授權密碼以執行此操作：");
-    if (pwd === "2866") {
-      return true;
-    } else if (pwd !== null) {
-      alert("密碼不正確！無法進行修改或刪除。");
-    }
-    return false;
-  }
-
-  // 📍 開啟修改申請
   function editRequest(reqId) {
     if (!verifyPassword()) return;
 
@@ -354,7 +361,6 @@
     openLeaveModal(true);
   }
 
-  // 📍 執行刪除申請
   async function deleteRequest(reqId) {
     if (!verifyPassword()) return;
     if (!confirm("確定要刪除這筆請假/OT申請嗎？刪除後無法復原。")) return;
@@ -417,7 +423,6 @@
             <span class="text-base">${l.name}</span>
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded text-xs ${l.type === '年假' ? 'bg-green-100 text-green-800' : l.type === '病假' ? 'bg-amber-100 text-amber-800' : l.type === 'OT補假' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">${l.type}</span>
-              <!-- 📍 修改與刪除按鈕 -->
               <button onclick="editRequest('${l.reqId}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded border cursor-pointer"><i class="fa-solid fa-pen"></i> 修改</button>
               <button onclick="deleteRequest('${l.reqId}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded border border-red-200 cursor-pointer"><i class="fa-solid fa-trash"></i> 刪除</button>
             </div>
@@ -628,7 +633,10 @@
     }
   }
 
+  // 🔒 需密碼驗證的 CSV 匯出功能
   function exportMonthlyCSV() {
+    if (!verifyPassword()) return;
+
     const selectedYear = currentDate.getFullYear();
     const selectedMonth = currentDate.getMonth() + 1;
     const requests = globalCalendarData.requests || [];
@@ -663,7 +671,7 @@
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.getElementById("a") || document.createElement("a");
+    const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", `新力機械_請假紀錄_${selectedYear}年${selectedMonth}月.csv`);
     document.body.appendChild(link);
@@ -671,7 +679,6 @@
     document.body.removeChild(link);
   }
 
-  // 📍 處理新增或修改表單提交
   async function handleLeaveSubmit(e) {
     e.preventDefault();
     const reqId = document.getElementById('leave-req-id').value;
