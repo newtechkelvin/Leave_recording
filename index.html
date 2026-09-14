@@ -69,7 +69,7 @@
             </div>
           </div>
 
-          <!-- 📍 紅框區域：今明放假動態資訊 -->
+          <!-- 📍 今明放假動態資訊 -->
           <div id="today-tomorrow-status" class="flex-1 max-w-md bg-amber-50/60 border border-amber-200 rounded-xl p-2 px-3 text-xs text-gray-700 flex items-center justify-around">
             <div><span class="font-bold text-amber-900">🌴 今日放假:</span> <span id="today-leave-list" class="font-semibold text-gray-800">讀取中...</span></div>
             <div class="h-4 w-[1px] bg-amber-200"></div>
@@ -79,7 +79,7 @@
           <div class="flex items-center gap-2">
             <!-- 📥 CSV 匯出按鈕 -->
             <button onclick="exportMonthlyCSV()" class="p-2 px-3 border border-gray-300 rounded-lg text-xs font-semibold hover:bg-gray-50 flex items-center gap-1.5 cursor-pointer">
-              <i class="fa-solid fa-file-csv text-green-600 text-sm"></i> 匯出 CSV
+              <i class="fa-solid fa-file-csv text-green-600 text-sm"></i> 匯出當月 CSV
             </button>
             <button onclick="changeMonth(-1)" class="p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"><i class="fa-solid fa-chevron-left"></i></button>
             <select id="select-year" onchange="onDatePickerChange()" class="p-2 border rounded-lg font-bold text-sm bg-white cursor-pointer"></select>
@@ -178,9 +178,9 @@
         <div>
           <label class="text-xs font-semibold text-gray-600">時段</label>
           <select id="leave-slot" class="w-full p-2 border rounded-lg text-sm mt-1">
-            <option value="全日">全日</option>
-            <option value="上午">上午 (半日)</option>
-            <option value="下午">下午 (半日)</option>
+            <option value="全日">全日 (1天)</option>
+            <option value="上午">上午 (半日 0.5天)</option>
+            <option value="下午">下午 (半日 0.5天)</option>
           </select>
         </div>
         <div>
@@ -231,6 +231,20 @@
           <button type="submit" class="accent-green px-4 py-2 rounded-lg text-sm font-bold cursor-pointer">儲存員工</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- 📍 彈窗 3: 每日請假與出勤詳情彈窗 -->
+  <div id="day-detail-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-6 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="day-modal-title" class="text-lg font-bold">2026-09-14 詳細資料</h3>
+        <button onclick="closeDayDetailModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+      <div id="day-modal-content" class="space-y-3 max-h-96 overflow-y-auto"></div>
+      <div class="flex justify-end pt-2">
+        <button onclick="closeDayDetailModal()" class="bg-sidebar text-white px-5 py-2 rounded-xl text-sm font-semibold cursor-pointer">關閉</button>
+      </div>
     </div>
   </div>
 
@@ -303,7 +317,62 @@
     document.getElementById('leave-modal').classList.remove('flex');
   }
 
-  // 🟡 病假動態顯示與 OT 必填控制
+  function openDayDetailModal(dateStr) {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const requests = globalCalendarData.requests || [];
+    const satDutyMap = globalCalendarData.saturdayDuty || {};
+    const holidaysMap = globalCalendarData.holidaysMap || {};
+
+    const dayLeaves = requests.filter(r => dateStr >= r.startDate && dateStr <= r.endDate);
+    const holidayName = holidaysMap[dateStr];
+    const dutyList = satDutyMap[dateStr] || [];
+
+    document.getElementById('day-modal-title').innerText = `${dateStr} 出勤與假期詳情`;
+    const container = document.getElementById('day-modal-content');
+    container.innerHTML = '';
+
+    if (holidayName) {
+      container.innerHTML += `
+        <div class="bg-red-50 border border-red-200 p-3 rounded-xl text-red-800 text-sm font-bold flex items-center gap-2">
+          <i class="fa-solid fa-flag"></i> 香港公眾假期：${holidayName}
+        </div>
+      `;
+    }
+
+    if (dutyList.length > 0) {
+      container.innerHTML += `
+        <div class="bg-gray-50 border border-gray-200 p-3 rounded-xl text-gray-700 text-sm">
+          <strong>🏢 星期六長短周當值名單：</strong> ${dutyList.join(', ')}
+        </div>
+      `;
+    }
+
+    if (dayLeaves.length === 0) {
+      container.innerHTML += `<div class="text-center text-gray-400 py-4 text-sm">當天無員工請假或 OT 申請</div>`;
+    } else {
+      container.innerHTML += dayLeaves.map(l => `
+        <div class="border rounded-xl p-3 space-y-1 text-sm bg-white shadow-sm">
+          <div class="flex justify-between items-center font-bold">
+            <span class="text-base">${l.name}</span>
+            <span class="px-2 py-0.5 rounded text-xs ${l.type === '年假' ? 'bg-green-100 text-green-800' : l.type === '病假' ? 'bg-amber-100 text-amber-800' : l.type === 'OT補假' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">${l.type}</span>
+          </div>
+          <div class="text-xs text-gray-500">時段：${l.timeSlot} (${l.startDate} ~ ${l.endDate})</div>
+          ${l.type === '病假' ? `<div class="text-xs text-amber-700">醫生紙證明：${l.hasDoctorCert} (顯示 ${l.doctorCertDays} 天)</div>` : ''}
+          ${l.remark ? `<div class="text-xs bg-gray-50 p-2 rounded text-gray-600 mt-1">備註：${l.remark}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('day-detail-modal').classList.remove('hidden');
+    document.getElementById('day-detail-modal').classList.add('flex');
+  }
+
+  function closeDayDetailModal() {
+    document.getElementById('day-detail-modal').classList.add('hidden');
+    document.getElementById('day-detail-modal').classList.remove('flex');
+  }
+
   function onLeaveTypeChange() {
     const type = document.getElementById('leave-type').value;
     const sickFields = document.getElementById('sick-leave-fields');
@@ -408,7 +477,6 @@
     }
   }
 
-  // 📍 渲染紅框處：今天與明天放假員工
   function renderTodayTomorrowLeaves() {
     const todayObj = new Date();
     const tomorrowObj = new Date();
@@ -454,9 +522,8 @@
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayLeaves = (globalCalendarData.requests || []).filter(r => dateStr >= r.startDate && dateStr <= r.endDate);
 
-      // 📍 高亮「今日」樣式
       const isToday = (dateStr === realTodayStr);
-      const cardBgClass = isToday ? 'bg-green-50/50 border-2 border-green-500 shadow-md ring-2 ring-green-200' : 'bg-white border border-gray-100';
+      const cardBgClass = isToday ? 'bg-green-50/50 border-2 border-green-500 shadow-md ring-2 ring-green-200' : 'bg-white border border-gray-100 hover:border-gray-300';
       const dayNumHeader = isToday ? `<span class="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">今日 (${d})</span>` : `<span class="font-bold text-sm text-gray-500">${d}</span>`;
 
       let holidayBadge = '';
@@ -483,8 +550,9 @@
         </div>`;
       }
 
+      // 📍 點擊卡片觸發跳出彈窗
       grid.innerHTML += `
-        <div class="h-28 rounded-xl p-2 flex flex-col justify-between ${cardBgClass}">
+        <div onclick="openDayDetailModal('${dateStr}')" class="h-28 rounded-xl p-2 flex flex-col justify-between cursor-pointer transition ${cardBgClass}">
           <div class="flex justify-between items-center">${dayNumHeader}</div>
           <div class="overflow-y-auto flex-1 my-1">
             ${holidayBadge}
@@ -496,22 +564,26 @@
     }
   }
 
-  // 📥 匯出當月請假/OT 詳細 CSV 功能 (UTF-8 含 BOM 避免 Excel 亂碼)
+  // 📍 精確匯出【當前檢視月份】的 CSV
   function exportMonthlyCSV() {
+    const selectedYear = currentDate.getFullYear();
+    const selectedMonth = currentDate.getMonth() + 1;
     const requests = globalCalendarData.requests || [];
-    if (requests.length === 0) {
-      alert("當前月份無請假或 OT 紀錄，無法匯出。");
+
+    // 📍 嚴格過濾：只篩選「開始或結束日期」落在當前選取年月份的資料
+    const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+    const filteredRequests = requests.filter(r => r.startDate.startsWith(monthStr) || r.endDate.startsWith(monthStr));
+
+    if (filteredRequests.length === 0) {
+      alert(`在 ${selectedYear} 年 ${selectedMonth} 月無請假或 OT 紀錄，無法匯出。`);
       return;
     }
 
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-
-    let csvContent = "\uFEFF"; // UTF-8 BOM 避免中文字亂碼
+    let csvContent = "\uFEFF"; // UTF-8 BOM 防亂碼
     csvContent += "員工姓名,放假開始日期,放假結束日期,假期日數,假期類別,假期時段,醫生紙證明,OT天數,狀態,備註\n";
 
-    requests.forEach(r => {
-      const otDays = (r.type === 'OT補假') ? 1 : 0;
+    filteredRequests.forEach(r => {
+      const otDays = (r.type === 'OT補假') ? (r.days || 1) : 0;
       const row = [
         `"${r.name}"`,
         `"${r.startDate}"`,
@@ -531,7 +603,7 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `新力機械_員工請假紀錄_${year}年${month}月.csv`);
+    link.setAttribute("download", `新力機械_請假紀錄_${selectedYear}年${selectedMonth}月.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
